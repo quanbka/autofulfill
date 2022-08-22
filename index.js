@@ -7,7 +7,7 @@ var orders = {};
 
 async function getFirstOrder() {
     console.log(`Get first order id > ${id}`);
-    let url = `https://glob.api.printerval.com/v2/order?filters=id>${id},verifier_id=1,payment_status=paid,status=processing&metri$
+    let url = `https://glob.api.printerval.com/v2/order?filters=id>${id},verifier_id=1,payment_status=paid,status=processing&metric=first`;
     axios.get(url)
         .then(async function(response) {
             order = response.data.result;
@@ -19,24 +19,26 @@ async function getFirstOrder() {
                 let data = apiResponse.data;
                 lastOrder = data;
                 console.log(JSON.stringify(data));
-                orders[id] = data;
-                if (data.status == 'return' && data.reason == 'same_color') {
-                    reportDesign (order);
+	            orders[id] = data;
+                if (data && data.status == 'successful' && data.result) {
+                    if (data.result.status == 'return' && data.result.reason == 'same_color') {
+                        reportDesign (data.result);
+                    }
                 }
             } else {
                 id = 0;
             }
-	})
-	.catch(async function(error) {
+        })
+        .catch(async function(error) {
             id++;
             console.log(error);
         })
-	.then(async function() {
+        .then(async function() {
             console.log(id);
             if (id !== null) {
                 getFirstOrder();
             }
-	});
+        });
 }
 
 (async () => {
@@ -58,7 +60,6 @@ const port = parseInt(process.env.PORT) || 8080;
 app.listen(port, () => {
   console.log(`helloworld: listening on port ${port}`);
 });
-
 
 async function reportDesign (order) {
     designJobId = await getDesignJobId (order);
